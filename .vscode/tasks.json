@@ -1,0 +1,25 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "g++.exe",
+			"command": "E:\\DevelopmentToolkit\\MinGW\\bin\\g++.exe",
+			"args": [
+				"-g",
+				"${file}",
+				"-o",
+				"${fileDirname}\\${fileBasenameNoExtension}.exe",
+				"-lws2_32"
+			],
+			"options": {
+				"cwd": "E:\\DevelopmentToolkit\\MinGW\\bin"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: E:\\DevelopmentToolkit\\MinGW\\bin\\g++.exe"
+		}
+	]
+}
