@@ -89,25 +89,6 @@ int main(int argc, char *argv[])
                 handle_error(0, "simplex_server - recv");
             if (nread == 0)
                 break; // client has disconnected
-
-            string duf = buf;
-            if (duf == "1\n")
-            {
-                FILE *in = fopen("send_bg.jpg", "r");
-                char Buffer[2] = "";
-                int len;
-                string head = "Image Head";
-                cout << head << endl;
-                send(new_s, head.c_str(), head.length() + 1, 0);
-                while ((len = fread(Buffer, sizeof(Buffer), 1, in)) > 0)
-                {
-                    send(s, Buffer, sizeof(Buffer), 0);
-                }
-                string end = "Hi";
-                cout << end << endl;
-                send(new_s, end.c_str(), end.length() + 1, 0);
-            }
-
             cout << buf << flush;
         }
         closesocket(new_s);
