@@ -51,10 +51,10 @@ int main(int argc, char *argv[])
     if (!granted)
         handle_error(errno, "simplex_server - socket not permited!");
 
-    // if (argc != 2)
-    //     handle_error(0, "usage: simplex_client host");
+    if (argc != 2)
+        handle_error(0, "usage: simplex_client host");
 
-    // char *host = argv[1];
+    char *host = argv[1];
 
     struct addrinfo *result = NULL;
     struct addrinfo *p = NULL;
