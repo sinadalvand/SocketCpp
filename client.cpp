@@ -5,11 +5,11 @@
 #include <cstdlib>
 #include <fstream>
 
-// Socket headers
+// Windows Socket headers
 #include <winsock2.h>
 #include <windows.h>
 
-// UNIX system headers
+// error header
 #include <errno.h>
 
 using namespace std;
@@ -17,6 +17,7 @@ using namespace std;
 const int SERVER_PORT = 5432;
 const int MAX_LINE = 256;
 
+// handle error with message
 void handle_error(int eno, char const *msg)
 {
     if (eno == 0)
@@ -26,6 +27,7 @@ void handle_error(int eno, char const *msg)
     exit(errno);
 }
 
+// request permission to make internet connection
 bool request_dll_and_permission()
 {
 #if defined(WIN32)
@@ -39,53 +41,31 @@ bool request_dll_and_permission()
 #endif
 }
 
+// log function
 void log(char *msg)
 {
     cout << msg << endl;
 }
 
-int sizeManager(int remain, int desiger)
-{
-    if (remain > desiger)
-    {
-        cout << " desier" << endl;
-        return desiger;
-    }
-    else
-    {
-        cout << " remain" << endl;
-        return remain;
-    }
-}
-char *buffermanager(char *buffer, int remain)
-{
-    if (remain > BUFSIZ)
-    {
-        cout << " desier" << endl;
-        return buffer;
-    }
-    else
-    {
-        cout << " remain" << endl;
-        return new char[remain];
-    }
-}
-
 int main(int argc, char *argv[])
 {
 
-    // if (argc != 2)
-    // handle_error(0, "usage: simplex_client host");
+    // check address
+    if (argc != 2)
+        handle_error(0, "usage: simplex_client host");
 
-    // char *host = argv[1];
+    // get address from args
+    char *host = argv[1];
 
+    // request permission
     bool granted = request_dll_and_permission();
     if (!granted)
         handle_error(errno, "simplex_server - socket not permited!");
 
     // Convert hostname to IP address
-    hostent *hp = gethostbyname("localhost");
+    hostent *hp = gethostbyname(host);
 
+    // get arg host address
     if (hp == NULL)
         handle_error(0, "simplex_client - gethostbyname (lookup error)");
     if (hp->h_addrtype != AF_INET)
@@ -114,9 +94,8 @@ int main(int argc, char *argv[])
         handle_error(errno, "simplex_client - connect");
 
     string buf;
-    int BUFSIZE = 1024;
     while (getline(cin, buf))
-    { // type ^D to quit
+    {
         // getline strips the newline, we want to pass it to the server
         buf.push_back('\n');
         // send takes a C string as an argument, NOT a C++ string
@@ -124,11 +103,12 @@ int main(int argc, char *argv[])
         // not length()
         send(sock, buf.c_str(), buf.length() + 1, 0);
 
-        if (buf == "1\n")
+        if (buf == "Image\n")
         {
-            cout << "Start get Image" << endl;
 
+            // define buffer
             char *buff = new char[BUFSIZ];
+
             //Read Picture Size
             printf("Reading Picture Size\n");
             recv(sock, buff, BUFSIZ, 0);
@@ -136,30 +116,31 @@ int main(int argc, char *argv[])
             cout << "Picture size:";
             cout << file_size << endl;
 
-            std::ofstream myOutpue;
-            myOutpue.open("c2.png", std::ios::binary);
+            // create new file for recive image
+            std::ofstream imageFile;
+            imageFile.open("client_image.png", std::ios::binary);
 
-            // //Read Picture Byte Array and Copy in file
+            //Read Picture Byte Array and Copy in file
             printf("Reading Picture Byte Array\n");
-            // FILE image = fopen("c1.png", "w");
             ssize_t len;
-            int remain_data = 0;
-            remain_data = file_size;
-            cout << "Recive Started:" << endl;
+            int remain_data = file_size;
             int reciveddata = 0;
+            printf("Recive Started:\n");
             while ((remain_data > 0) && ((len = recv(sock, buff, BUFSIZ, 0)) > 0))
             {
-                myOutpue.write(buff, len);
-                // fwrite(buff, 1, len, image);
+                imageFile.write(buff, len);
                 reciveddata += len;
                 remain_data -= len;
-                fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
+                int percent = (reciveddata*1.0 / file_size*1.0) * 100;
+                cout << "Recive:";
+                cout << percent;
+                cout << "%" << endl;
             }
-            myOutpue.close();
-            // fclose(image);
-            cout << "Recive Ended.";
+
+            // close stream
+            imageFile.close();
+            cout << "Recived Size:";
             cout << reciveddata << endl;
-            // fclose(image);
         }
     }
     closesocket(sock);

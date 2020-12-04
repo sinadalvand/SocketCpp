@@ -3,12 +3,12 @@
 #include <cstring>
 #include <cstdlib>
 
-// Socket headers
+// Windows Socket headers
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 
-// UNIX system headers
+// error header
 #include <errno.h>
 
 using namespace std;
@@ -17,6 +17,7 @@ const int SERVER_PORT = 5432;
 const int MAX_PENDING = 5;
 const int MAX_LINE = 256;
 
+// handle errors
 void handle_error(int eno, char const *msg)
 {
     if (eno == 0)
@@ -26,6 +27,7 @@ void handle_error(int eno, char const *msg)
     exit(errno);
 }
 
+// request for internet permission
 bool request_dll_and_permission()
 {
 #if defined(WIN32)
@@ -91,13 +93,16 @@ int main(int argc, char *argv[])
                 break; // client has disconnected
 
             string duf = buf;
-            int BUFSIZE = BUFSIZ;
-            if (duf == "1\n")
+            if (duf == "Image\n")
             {
 
                 printf("Getting Picture Size\n");
+
+                // make file stream
                 FILE *picture;
                 picture = fopen("server_image.png", "rb");
+
+                // get size of file
                 int size;
                 fseek(picture, 0, SEEK_END);
                 size = ftell(picture);
@@ -113,9 +118,11 @@ int main(int argc, char *argv[])
 
                 // Send Picture as Byte Array(without need of a buffer as large as the image file)
                 printf("Sending Picture as Byte Array\n");
-                char send_buffer[BUFSIZE]; // no link between BUFSIZE and the file size
+                char send_buffer[BUFSIZ]; // no link between BUFSIZE and the file size
                 cout << sizeof(send_buffer) << endl;
-                cout << "Stream Start :" << endl;
+                printf("Send Start :\n");
+
+
                 int counter = 0;
                 while (!feof(picture))
                 {
@@ -127,7 +134,7 @@ int main(int argc, char *argv[])
                     counter += nb;
                     // no need to bzero
                 }
-                cout << "Stream done // ";
+                cout << "Sent Size:";
                 cout << counter << endl;
             }
 
