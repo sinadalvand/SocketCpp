@@ -91,21 +91,44 @@ int main(int argc, char *argv[])
                 break; // client has disconnected
 
             string duf = buf;
+            int BUFSIZE = BUFSIZ;
             if (duf == "1\n")
             {
-                FILE *in = fopen("send_bg.jpg", "r");
-                char Buffer[2] = "";
-                int len;
-                string head = "Image Head";
-                cout << head << endl;
-                send(new_s, head.c_str(), head.length() + 1, 0);
-                while ((len = fread(Buffer, sizeof(Buffer), 1, in)) > 0)
+
+                printf("Getting Picture Size\n");
+                FILE *picture;
+                picture = fopen("server_image.png", "rb");
+                int size;
+                fseek(picture, 0, SEEK_END);
+                size = ftell(picture);
+                fseek(picture, 0, SEEK_SET);
+
+                //Send Picture Size
+                printf("Sending Picture Size\n");
+                char file_size[256];
+                sprintf(file_size, "%d", size);
+                cout << "Picture size:";
+                cout << file_size << endl;
+                send(new_s, file_size, sizeof(file_size), 0);
+
+                // Send Picture as Byte Array(without need of a buffer as large as the image file)
+                printf("Sending Picture as Byte Array\n");
+                char send_buffer[BUFSIZE]; // no link between BUFSIZE and the file size
+                cout << sizeof(send_buffer) << endl;
+                cout << "Stream Start :" << endl;
+                int counter = 0;
+                while (!feof(picture))
                 {
-                    send(s, Buffer, sizeof(Buffer), 0);
+                    int nb = fread(send_buffer, 1, sizeof(send_buffer), picture);
+                    send(new_s, send_buffer, nb, 0);
+                    cout << "Buffer Send ... " << endl;
+                    cout << "byte ";
+                    cout << nb << endl;
+                    counter += nb;
+                    // no need to bzero
                 }
-                string end = "Hi";
-                cout << end << endl;
-                send(new_s, end.c_str(), end.length() + 1, 0);
+                cout << "Stream done // ";
+                cout << counter << endl;
             }
 
             cout << buf << flush;

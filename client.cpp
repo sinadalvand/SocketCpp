@@ -3,6 +3,7 @@
 #include <string>
 #include <cstring>
 #include <cstdlib>
+#include <fstream>
 
 // Socket headers
 #include <winsock2.h>
@@ -41,6 +42,33 @@ bool request_dll_and_permission()
 void log(char *msg)
 {
     cout << msg << endl;
+}
+
+int sizeManager(int remain, int desiger)
+{
+    if (remain > desiger)
+    {
+        cout << " desier" << endl;
+        return desiger;
+    }
+    else
+    {
+        cout << " remain" << endl;
+        return remain;
+    }
+}
+char *buffermanager(char *buffer, int remain)
+{
+    if (remain > BUFSIZ)
+    {
+        cout << " desier" << endl;
+        return buffer;
+    }
+    else
+    {
+        cout << " remain" << endl;
+        return new char[remain];
+    }
 }
 
 int main(int argc, char *argv[])
@@ -86,6 +114,7 @@ int main(int argc, char *argv[])
         handle_error(errno, "simplex_client - connect");
 
     string buf;
+    int BUFSIZE = 1024;
     while (getline(cin, buf))
     { // type ^D to quit
         // getline strips the newline, we want to pass it to the server
@@ -99,28 +128,38 @@ int main(int argc, char *argv[])
         {
             cout << "Start get Image" << endl;
 
-            FILE *fp = fopen("recv-bg.jpg", "w");
-            while (1)
+            char *buff = new char[BUFSIZ];
+            //Read Picture Size
+            printf("Reading Picture Size\n");
+            recv(sock, buff, BUFSIZ, 0);
+            int file_size = atoi(buff);
+            cout << "Picture size:";
+            cout << file_size << endl;
 
+            std::ofstream myOutpue;
+            myOutpue.open("c2.png", std::ios::binary);
+
+            // //Read Picture Byte Array and Copy in file
+            printf("Reading Picture Byte Array\n");
+            // FILE image = fopen("c1.png", "w");
+            ssize_t len;
+            int remain_data = 0;
+            remain_data = file_size;
+            cout << "Recive Started:" << endl;
+            int reciveddata = 0;
+            while ((remain_data > 0) && ((len = recv(sock, buff, BUFSIZ, 0)) > 0))
             {
-                cout << "Buffering ..." << endl;
-                char Buffer[2] = "";
-                if (recv(sock, Buffer, sizeof(Buffer), 0))
-                {
-                    string duffer = Buffer;
-                    if (duffer == "Hi")
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        cout << "Writed ..." << endl;
-                        fwrite(Buffer, sizeof(Buffer), 1, fp);
-                    }
-                }
+                myOutpue.write(buff, len);
+                // fwrite(buff, 1, len, image);
+                reciveddata += len;
+                remain_data -= len;
+                fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
             }
-            fclose(fp);
-            cout << "Done" << endl;
+            myOutpue.close();
+            // fclose(image);
+            cout << "Recive Ended.";
+            cout << reciveddata << endl;
+            // fclose(image);
         }
     }
     closesocket(sock);
