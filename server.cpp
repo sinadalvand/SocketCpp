@@ -1,11 +1,15 @@
+
+#define WINVER 0x0A00
+#define _WIN32_WINNT 0x0A00
+
 // Standard C++ headers
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
 
 // Socket headers
-#include <winsock2.h>
 #include <windows.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
 
 // UNIX system headers
@@ -13,7 +17,8 @@
 
 using namespace std;
 
-const int SERVER_PORT = 5432;
+char const *ip = "127.0.0.1";
+char const *port = "55555";
 const int MAX_PENDING = 5;
 const int MAX_LINE = 256;
 
@@ -47,26 +52,49 @@ int main(int argc, char *argv[])
         handle_error(errno, "simplex_server - socket not permited!");
 
     int nread;
-    socklen_t len;
-    sockaddr_in sin;
-    sockaddr *sin_p = (sockaddr *)&sin;
-    sin.sin_family = AF_INET; // IP version 4
-    sin.sin_port = htons(SERVER_PORT);
-    sin.sin_addr.s_addr = htonl(INADDR_ANY); // Listen on all IP addresses
+    struct addrinfo *result = NULL;
+    struct addrinfo *p = NULL;
+    struct addrinfo hints;
 
-    // Create socket
-    int s = socket(AF_INET, SOCK_STREAM, 0);
-    if (s == -1)
-        handle_error(errno, "simplex_server - socket");
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_INET; // IP version 4
 
-    // Bind socket to local address
-    int rstat = bind(s, sin_p, sizeof(sin));
-    if (rstat == -1)
-        handle_error(errno, "simplex_server - bind");
+    int rv = getaddrinfo(ip, port, &hints, &result);
 
-    rstat = listen(s, MAX_PENDING);
-    if (rstat == -1)
-        handle_error(errno, "simplex_server - listen");
+    int s;
+    int rstat;
+    for (p = result; p != NULL; p = p->ai_next)
+    {
+        if ((s = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+        {
+            continue;
+        }
+
+        if ((rstat = bind(s, p->ai_addr, p->ai_addrlen) == -1))
+        {
+            closesocket(s);
+            continue;
+        }
+
+        break;
+    }
+
+    if (p == NULL)
+    {
+        fprintf(stderr, "failed to bind socket\n");
+        exit(2);
+    }
+
+    if ((rstat = listen(s, MAX_PENDING)) < 0)
+    {
+        fprintf(stderr, "Error in syscall listen.\n");
+    }
+
+    int pl_one;
+    socklen_t pl_one_len;
+    struct sockaddr_in pl_one_addr;
 
     // Allocate a memory buffer for received messages
     char *buf = new char[MAX_LINE];
@@ -76,8 +104,10 @@ int main(int argc, char *argv[])
     {
         // Upon return the sin structure will contain the address of the
         // connecting socket.  Note that a new socket is returned.
-        len = sizeof(sin);
-        int new_s = accept(s, sin_p, &len);
+
+        // Get the two clients connections.
+        pl_one_len = sizeof(pl_one_addr);
+        int new_s = accept(s, (struct sockaddr *)&pl_one_addr, &pl_one_len);
         if (new_s == -1)
             handle_error(errno, "simplex_server - accept");
 
@@ -89,6 +119,7 @@ int main(int argc, char *argv[])
                 handle_error(0, "simplex_server - recv");
             if (nread == 0)
                 break; // client has disconnected
+
             cout << buf << flush;
         }
         closesocket(new_s);
