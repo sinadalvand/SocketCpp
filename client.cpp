@@ -3,7 +3,6 @@
 #include <string>
 #include <cstring>
 #include <cstdlib>
-#include <fstream>
 
 // Socket headers
 #include <winsock2.h>
@@ -39,53 +38,20 @@ bool request_dll_and_permission()
 #endif
 }
 
-void log(char *msg)
-{
-    cout << msg << endl;
-}
-
-int sizeManager(int remain, int desiger)
-{
-    if (remain > desiger)
-    {
-        cout << " desier" << endl;
-        return desiger;
-    }
-    else
-    {
-        cout << " remain" << endl;
-        return remain;
-    }
-}
-char *buffermanager(char *buffer, int remain)
-{
-    if (remain > BUFSIZ)
-    {
-        cout << " desier" << endl;
-        return buffer;
-    }
-    else
-    {
-        cout << " remain" << endl;
-        return new char[remain];
-    }
-}
-
 int main(int argc, char *argv[])
 {
-
-    // if (argc != 2)
-    // handle_error(0, "usage: simplex_client host");
-
-    // char *host = argv[1];
 
     bool granted = request_dll_and_permission();
     if (!granted)
         handle_error(errno, "simplex_server - socket not permited!");
 
-    // Convert hostname to IP address
-    hostent *hp = gethostbyname("localhost");
+    if (argc != 2)
+        handle_error(0, "usage: simplex_client host");
 
+    char *host = argv[1];
+
+    // Convert hostname to IP address
+    hostent *hp = gethostbyname(host);
     if (hp == NULL)
         handle_error(0, "simplex_client - gethostbyname (lookup error)");
     if (hp->h_addrtype != AF_INET)
@@ -104,17 +70,16 @@ int main(int argc, char *argv[])
     cout << "server IP address: " << rmem << endl;
 
     // Create a socket
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1)
+    int s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s == -1)
         handle_error(errno, "simplex_client - socket");
 
     // Connect to the server
-    int rstat = connect(sock, sin_p, sizeof(sin));
+    int rstat = connect(s, sin_p, sizeof(sin));
     if (rstat == -1)
         handle_error(errno, "simplex_client - connect");
 
     string buf;
-    int BUFSIZE = 1024;
     while (getline(cin, buf))
     { // type ^D to quit
         // getline strips the newline, we want to pass it to the server
@@ -122,46 +87,8 @@ int main(int argc, char *argv[])
         // send takes a C string as an argument, NOT a C++ string
         // The string and the terminating 0 is sent, hence length()+1,
         // not length()
-        send(sock, buf.c_str(), buf.length() + 1, 0);
-
-        if (buf == "1\n")
-        {
-            cout << "Start get Image" << endl;
-
-            char *buff = new char[BUFSIZ];
-            //Read Picture Size
-            printf("Reading Picture Size\n");
-            recv(sock, buff, BUFSIZ, 0);
-            int file_size = atoi(buff);
-            cout << "Picture size:";
-            cout << file_size << endl;
-
-            std::ofstream myOutpue;
-            myOutpue.open("c2.png", std::ios::binary);
-
-            // //Read Picture Byte Array and Copy in file
-            printf("Reading Picture Byte Array\n");
-            // FILE image = fopen("c1.png", "w");
-            ssize_t len;
-            int remain_data = 0;
-            remain_data = file_size;
-            cout << "Recive Started:" << endl;
-            int reciveddata = 0;
-            while ((remain_data > 0) && ((len = recv(sock, buff, BUFSIZ, 0)) > 0))
-            {
-                myOutpue.write(buff, len);
-                // fwrite(buff, 1, len, image);
-                reciveddata += len;
-                remain_data -= len;
-                fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
-            }
-            myOutpue.close();
-            // fclose(image);
-            cout << "Recive Ended.";
-            cout << reciveddata << endl;
-            // fclose(image);
-        }
+        send(s, buf.c_str(), buf.length() + 1, 0);
     }
-    closesocket(sock);
+    closesocket(s);
     return 0;
 }

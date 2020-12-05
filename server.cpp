@@ -89,48 +89,6 @@ int main(int argc, char *argv[])
                 handle_error(0, "simplex_server - recv");
             if (nread == 0)
                 break; // client has disconnected
-
-            string duf = buf;
-            int BUFSIZE = BUFSIZ;
-            if (duf == "1\n")
-            {
-
-                printf("Getting Picture Size\n");
-                FILE *picture;
-                picture = fopen("server_image.png", "rb");
-                int size;
-                fseek(picture, 0, SEEK_END);
-                size = ftell(picture);
-                fseek(picture, 0, SEEK_SET);
-
-                //Send Picture Size
-                printf("Sending Picture Size\n");
-                char file_size[256];
-                sprintf(file_size, "%d", size);
-                cout << "Picture size:";
-                cout << file_size << endl;
-                send(new_s, file_size, sizeof(file_size), 0);
-
-                // Send Picture as Byte Array(without need of a buffer as large as the image file)
-                printf("Sending Picture as Byte Array\n");
-                char send_buffer[BUFSIZE]; // no link between BUFSIZE and the file size
-                cout << sizeof(send_buffer) << endl;
-                cout << "Stream Start :" << endl;
-                int counter = 0;
-                while (!feof(picture))
-                {
-                    int nb = fread(send_buffer, 1, sizeof(send_buffer), picture);
-                    send(new_s, send_buffer, nb, 0);
-                    cout << "Buffer Send ... " << endl;
-                    cout << "byte ";
-                    cout << nb << endl;
-                    counter += nb;
-                    // no need to bzero
-                }
-                cout << "Stream done // ";
-                cout << counter << endl;
-            }
-
             cout << buf << flush;
         }
         closesocket(new_s);
