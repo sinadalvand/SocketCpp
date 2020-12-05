@@ -1,4 +1,4 @@
-# SocketCpp
+# SocketCpp (Windows)
 Simple Socket connection in C++ (with sending image between client and server)
 
 ## branches
