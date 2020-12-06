@@ -2,10 +2,10 @@
 Simple Socket connection in C++ (with sending image between client and server)
 
 ## branches
-* [showip](https://github.com/sinadalvand/SocketCpp/tree/base) => socket code that try to get ip address from url
-* [base](https://github.com/sinadalvand/SocketCpp/tree/file)   => simple socket send text message from client to server
-* [update](https://github.com/sinadalvand/SocketCpp/tree/showip) => previous simple app but using new functions
-* [file](https://github.com/sinadalvand/SocketCpp/tree/update)   => same previous project but if you type ``"Image"`` in client you will get image from server
+* [showip](https://github.com/sinadalvand/SocketCpp/tree/showip) => socket code that try to get ip address from url
+* [base](https://github.com/sinadalvand/SocketCpp/tree/base)   => simple socket send text message from client to server
+* [update](https://github.com/sinadalvand/SocketCpp/tree/update) => previous simple app but using new functions
+* [file](https://github.com/sinadalvand/SocketCpp/tree/file)   => same previous project but if you type ``"Image"`` in client you will get image from server
 
 </br>
 
